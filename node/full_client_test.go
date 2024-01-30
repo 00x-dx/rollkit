@@ -338,8 +338,60 @@ func TestGetBlock(t *testing.T) {
 	blockResp, err := rpc.Block(ctx, nil)
 	require.NoError(err)
 	require.NotNil(blockResp)
+	require.NotNil(blockResp.BlockID)
+	require.NotNil(blockResp.BlockID.Hash)
+	require.NotNil(blockResp.Block)
+	require.NotNil(blockResp.Block.DataHash)
+	require.NotNil(blockResp.Block.ConsensusHash)
+	require.NotNil(blockResp.Block.AppHash)
+	require.NotNil(blockResp.Block.LastResultsHash)
+	require.NotNil(blockResp.Block.EvidenceHash)
+	require.NotZero(len(blockResp.Block.LastCommit.Signatures))
+	require.NotNil(blockResp.Block.LastCommit.Signatures[0].ValidatorAddress)
+	require.NotNil(blockResp.Block.LastCommit.Signatures[0].Signature)
 
-	assert.NotNil(blockResp.Block)
+	abciBlock, err := abciconv.ToABCIBlock(block)
+	require.NoError(err)
+
+	/*
+		Should the below values be nil ?
+		 	require.NotNil(blockResp.Block.Hash())
+			require.NotNil(abciBlock.Hash())
+			require.NotNil(blockResp.Block.ValidatorsHash)
+			require.NotNil(blockResp.Block.NextValidatorsHash)
+	*/
+	fmt.Println(block.SignedHeader.Validators.Proposer.Address)
+	require.Equal(abciBlock, blockResp.Block)
+	require.EqualValues(abciBlock.Height, blockResp.Block.Height)
+	require.Equal(
+		hex.EncodeToString(block.Hash()),
+		hex.EncodeToString(blockResp.BlockID.Hash))
+	require.Equal(
+		hex.EncodeToString(abciBlock.Header.DataHash),
+		hex.EncodeToString(blockResp.Block.DataHash))
+	require.Equal(
+		hex.EncodeToString(abciBlock.Header.ConsensusHash),
+		hex.EncodeToString(blockResp.Block.ConsensusHash))
+	require.Equal(
+		hex.EncodeToString(abciBlock.Header.AppHash),
+		hex.EncodeToString(blockResp.Block.AppHash))
+	require.Equal(
+		hex.EncodeToString(abciBlock.Header.LastResultsHash),
+		hex.EncodeToString(blockResp.Block.LastResultsHash))
+	require.Equal(
+		hex.EncodeToString(abciBlock.Header.EvidenceHash),
+		hex.EncodeToString(blockResp.Block.EvidenceHash))
+	require.Equal(
+		hex.EncodeToString(abciBlock.Header.ProposerAddress),
+		hex.EncodeToString(blockResp.Block.ProposerAddress))
+
+	require.Equal(
+		hex.EncodeToString(abciBlock.LastCommit.Signatures[0].Signature),
+		hex.EncodeToString(blockResp.Block.LastCommit.Signatures[0].Signature))
+	require.Equal(
+		hex.EncodeToString(abciBlock.LastCommit.Signatures[0].ValidatorAddress),
+		hex.EncodeToString(blockResp.Block.LastCommit.Signatures[0].ValidatorAddress))
+
 }
 
 func TestGetCommit(t *testing.T) {
@@ -467,7 +519,10 @@ func TestGetBlockByHash(t *testing.T) {
 	assert.Equal(abciBlock.Hash(), retrievedBlock.Block.Hash())
 
 	blockHash := block.Hash()
+	require.NotEmpty(blockHash)
 	blockResp, err := rpc.BlockByHash(context.Background(), blockHash[:])
+	fmt.Println(blockResp)
+	fmt.Println(blockHash)
 	require.NoError(err)
 	require.NotNil(blockResp)
 
